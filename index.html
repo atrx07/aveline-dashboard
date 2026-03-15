@@ -21,7 +21,6 @@
       --orange: #ffb347;
       --r: 12px;
       --rs: 8px;
-      --sw: 60px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -41,10 +40,8 @@
     }
     .lbox {
       width: 100%; max-width: 340px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 36px 28px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 36px 28px;
       display: flex; flex-direction: column; gap: 18px;
       animation: up 0.4s ease;
     }
@@ -69,59 +66,99 @@
     .l-btn:hover { opacity: 0.85; }
     .l-err { font-size: 12px; color: var(--red); text-align: center; display: none; }
 
-    /* LAYOUT */
+    /* HAMBURGER MENU */
     #dashboard { display: none; }
-    .sidebar {
-      position: fixed; left: 0; top: 0; bottom: 0;
-      width: var(--sw);
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; align-items: center;
-      padding: 14px 0; z-index: 10; gap: 2px;
-    }
-    .sb-brand {
-      font-size: 20px; font-weight: 900; font-style: italic;
-      color: var(--accent); margin-bottom: 14px; letter-spacing: -1px;
-    }
-    .ni {
-      width: 42px; height: 42px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 17px;
-      color: var(--muted); transition: all 0.15s;
-      border: 1px solid transparent; position: relative;
-    }
-    .ni:hover { background: var(--surface2); color: var(--text); }
-    .ni.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(232,255,107,0.18); }
-    .ni::after {
-      content: attr(data-tip);
-      position: absolute; left: 50px;
-      background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text); font-size: 11px; font-weight: 600;
-      padding: 5px 10px; border-radius: 6px;
-      white-space: nowrap; opacity: 0; pointer-events: none;
-      transition: opacity 0.15s; z-index: 30;
-    }
-    .ni:hover::after { opacity: 1; }
-    .sb-space { flex: 1; }
-    .sb-pip {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--green); box-shadow: 0 0 6px var(--green);
-      margin-bottom: 8px;
-    }
-    .sb-pip.off { background: var(--red); box-shadow: 0 0 6px var(--red); }
-    .sb-pip.pause { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
 
-    .main { margin-left: var(--sw); padding: 24px 18px; min-height: 100vh; }
+    .topnav {
+      position: fixed; top: 0; left: 0; right: 0; height: 52px;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 16px;
+      z-index: 20; gap: 14px;
+    }
+
+    .ham {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 5px; cursor: pointer; flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .ham:hover { background: var(--surface2); }
+    .ham span {
+      display: block; width: 18px; height: 2px;
+      background: var(--text); border-radius: 2px;
+      transition: all 0.3s;
+    }
+    .ham.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .ham.open span:nth-child(2) { opacity: 0; }
+    .ham.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .nav-brand { font-size: 18px; font-weight: 900; font-style: italic; color: var(--accent); letter-spacing: -1px; }
+    .nav-page-name { font-size: 13px; font-weight: 700; color: var(--dim); margin-left: auto; }
+    .nav-pip { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px var(--green); flex-shrink: 0; }
+    .nav-pip.off { background: var(--red); box-shadow: 0 0 5px var(--red); }
+    .nav-pip.pause { background: var(--orange); box-shadow: 0 0 5px var(--orange); }
+
+    /* DRAWER */
+    .drawer-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 29; display: none; opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .drawer-overlay.open { display: block; opacity: 1; }
+
+    .drawer {
+      position: fixed; top: 0; left: -260px; bottom: 0; width: 240px;
+      background: var(--surface); border-right: 1px solid var(--border);
+      z-index: 30; transition: left 0.28s cubic-bezier(0.4,0,0.2,1);
+      display: flex; flex-direction: column; padding: 20px 0;
+    }
+    .drawer.open { left: 0; }
+
+    .drawer-head {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .drawer-logo { font-size: 24px; font-weight: 900; font-style: italic; color: var(--accent); letter-spacing: -1px; }
+    .drawer-sub { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 2px; }
+
+    .drawer-nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+
+    .dni {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 12px; border-radius: 10px;
+      cursor: pointer; font-size: 14px; font-weight: 500;
+      color: var(--dim); transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    .dni:hover { background: var(--surface2); color: var(--text); }
+    .dni.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(232,255,107,0.15); }
+    .dni-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+    .dni-label { font-weight: 600; }
+
+    .drawer-foot {
+      padding: 16px 20px; border-top: 1px solid var(--border);
+    }
+    .drawer-status {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--dim);
+    }
+    .ds-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px var(--green); }
+    .ds-dot.off { background: var(--red); box-shadow: 0 0 5px var(--red); }
+    .ds-dot.pause { background: var(--orange); box-shadow: 0 0 5px var(--orange); }
+
+    /* MAIN */
+    .main { margin-top: 52px; padding: 20px 16px; min-height: calc(100vh - 52px); }
     .page { display: none; animation: up 0.25s ease; }
     .page.active { display: block; }
 
     /* TOPBAR */
-    .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
-    .pt { font-size: 22px; font-weight: 900; font-style: italic; letter-spacing: -0.5px; }
+    .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; gap: 10px; }
+    .pt { font-size: 20px; font-weight: 900; font-style: italic; letter-spacing: -0.5px; }
     .ps { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .rbtn {
       background: none; border: 1px solid var(--border);
-      border-radius: var(--rs); padding: 8px 13px;
+      border-radius: var(--rs); padding: 7px 12px;
       color: var(--dim); font-size: 12px; cursor: pointer;
       font-family: inherit; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
     }
@@ -138,7 +175,6 @@
     .cv { font-size: 30px; font-weight: 900; font-style: italic; line-height: 1; letter-spacing: -1px; }
     .cv.accent { color: var(--accent); }
     .cv.red { color: var(--red); }
-    .cv.green { color: var(--green); }
     .csub { font-size: 11px; color: var(--muted); margin-top: 5px; }
     .stitle { font-size: 12px; font-weight: 800; font-style: italic; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px; }
 
@@ -149,16 +185,8 @@
     .dot.pause { background: var(--orange); box-shadow: 0 0 5px var(--orange); }
     .stxt { font-size: 18px; font-weight: 900; font-style: italic; }
 
-    /* POWER */
-    .pcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 20px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-    .pcard .title { font-size: 16px; font-weight: 800; font-style: italic; }
-    .pcard .desc { font-size: 11px; color: var(--muted); margin-top: 3px; }
-    .pbtn { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--green); background: rgba(95,255,154,0.07); color: var(--green); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
-    .pbtn:hover { background: rgba(95,255,154,0.15); transform: scale(1.05); }
-    .pbtn.pause { border-color: var(--orange); background: rgba(255,179,71,0.07); color: var(--orange); }
-
     /* BARS */
-    .bwrap { display: flex; flex-direction: column; gap: 12px; }
+    .bwrap { display: flex; flex-direction: column; gap: 14px; }
     .bi { display: flex; flex-direction: column; gap: 5px; }
     .bh { display: flex; justify-content: space-between; font-size: 12px; }
     .bl { color: var(--dim); }
@@ -166,7 +194,7 @@
     .btrack { height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
     .bfill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.6s ease; }
 
-    /* KEYS */
+    /* KEY CARDS */
     .kgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
     .kcard { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--rs); padding: 12px; }
     .kname { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
@@ -174,57 +202,129 @@
     .ksub { font-size: 10px; color: var(--muted); margin-top: 3px; }
 
     /* FEED */
-    .flist { display: flex; flex-direction: column; gap: 7px; max-height: 520px; overflow-y: auto; }
-    .flist::-webkit-scrollbar { width: 3px; }
-    .flist::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-    .fi { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--rs); padding: 11px 13px; display: flex; gap: 9px; align-items: flex-start; }
+    .flist { display: flex; flex-direction: column; gap: 7px; }
+    .fi {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--rs); padding: 11px 13px;
+      cursor: pointer; transition: border-color 0.15s;
+    }
+    .fi:hover { border-color: var(--dim); }
     .fi.sys { border-color: rgba(232,255,107,0.14); background: rgba(232,255,107,0.03); }
-    .ftag { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; margin-top: 1px; }
+    .fi.expanded { border-color: var(--accent); }
+
+    .fi-top { display: flex; gap: 9px; align-items: flex-start; }
+    .ftag { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
     .ftag.msg { background: rgba(95,184,255,0.12); color: var(--blue); }
     .ftag.sys { background: var(--accent-dim); color: var(--accent); }
-    .fb { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .fn { font-size: 12px; font-weight: 700; }
-    .ft { font-size: 11px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .fr { font-size: 11px; color: var(--muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .fm { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 10px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
 
-    /* TABLE */
-    .twrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 480px; }
-    th { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); padding: 10px 13px; text-align: left; border-bottom: 1px solid var(--border); }
-    td { padding: 11px 13px; font-size: 12px; color: var(--dim); border-bottom: 1px solid var(--border); }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--surface2); }
-    .cid { font-family: monospace; color: var(--text); font-size: 11px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
-    .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .fi-body { flex: 1; min-width: 0; }
+    .fn { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .ft-preview { font-size: 11px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fi-meta { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0; }
+    .fi-time { font-size: 10px; color: var(--muted); white-space: nowrap; }
+    .fi-mood { font-size: 11px; }
+    .fi-arrow { font-size: 11px; color: var(--muted); transition: transform 0.2s; }
+    .fi.expanded .fi-arrow { transform: rotate(180deg); }
+
+    .fi-expand {
+      display: none; margin-top: 10px;
+      padding-top: 10px; border-top: 1px solid var(--border);
+    }
+    .fi.expanded .fi-expand { display: block; }
+    .fi-expand-row { margin-bottom: 8px; }
+    .fi-expand-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+    .fi-expand-text { font-size: 12px; color: var(--text); line-height: 1.5; word-break: break-word; }
+    .fi-expand-text.reply { color: var(--dim); font-style: italic; }
+    .fi-expand-stats { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+    .fi-stat { font-size: 10px; color: var(--muted); }
+    .fi-stat span { color: var(--accent); font-weight: 700; }
+
+    /* CHATS — card style instead of table */
+    .chat-cards { display: flex; flex-direction: column; gap: 10px; }
+
+    .chat-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--rs); padding: 14px 16px;
+    }
+
+    .cc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .cc-name { font-size: 13px; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
     .bg { background: rgba(95,184,255,0.1); color: var(--blue); }
     .bd { background: var(--accent-dim); color: var(--accent); }
     .bb { background: rgba(255,95,95,0.1); color: var(--red); }
     .ba { background: rgba(95,255,154,0.1); color: var(--green); }
-    .agroup { display: flex; gap: 4px; flex-wrap: wrap; }
-    .abtn { background: none; border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+
+    .cc-info { display: flex; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+    .cc-info-item { font-size: 11px; color: var(--muted); }
+    .cc-info-item span { color: var(--text); font-weight: 600; }
+
+    .cc-id { font-size: 10px; color: var(--muted); font-family: monospace; margin-bottom: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .agroup { display: flex; gap: 6px; flex-wrap: wrap; }
+    .abtn {
+      background: none; border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 12px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--dim);
+      cursor: pointer; font-family: inherit; transition: all 0.15s;
+    }
     .abtn:hover { border-color: var(--accent); color: var(--accent); }
     .abtn.d:hover { border-color: var(--red); color: var(--red); }
     .abtn.w:hover { border-color: var(--orange); color: var(--orange); }
 
+    /* POWER */
+    .pcard {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 20px 18px;
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    }
+    .pcard .title { font-size: 16px; font-weight: 800; font-style: italic; }
+    .pcard .desc { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .pbtn {
+      width: 52px; height: 52px; border-radius: 50%;
+      border: 2px solid var(--green); background: rgba(95,255,154,0.07);
+      color: var(--green); font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .pbtn:hover { background: rgba(95,255,154,0.15); transform: scale(1.05); }
+    .pbtn.pause { border-color: var(--orange); background: rgba(255,179,71,0.07); color: var(--orange); }
+
     /* DANGER */
-    .dcard { background: var(--surface); border: 1px solid rgba(255,95,95,0.2); border-radius: var(--r); padding: 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .dcard {
+      background: var(--surface); border: 1px solid rgba(255,95,95,0.2);
+      border-radius: var(--r); padding: 18px;
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    }
     .dtitle { font-size: 15px; font-weight: 800; font-style: italic; color: var(--red); }
     .ddesc { font-size: 11px; color: var(--muted); margin-top: 3px; }
-    .dbtn { background: rgba(255,95,95,0.1); border: 1px solid rgba(255,95,95,0.25); border-radius: var(--rs); padding: 9px 16px; color: var(--red); font-size: 11px; font-weight: 800; font-style: italic; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; font-family: inherit; transition: all 0.2s; flex-shrink: 0; }
+    .dbtn {
+      background: rgba(255,95,95,0.1); border: 1px solid rgba(255,95,95,0.25);
+      border-radius: var(--rs); padding: 9px 16px;
+      color: var(--red); font-size: 11px; font-weight: 800;
+      font-style: italic; text-transform: uppercase; letter-spacing: 1px;
+      cursor: pointer; font-family: inherit; transition: all 0.2s; flex-shrink: 0;
+    }
     .dbtn:hover { background: rgba(255,95,95,0.18); }
 
     /* MISC */
     .loading { color: var(--muted); font-size: 12px; padding: 20px; text-align: center; }
-    .toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--rs); padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--accent); z-index: 1000; display: none; animation: up 0.3s ease; }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: var(--rs); padding: 10px 16px;
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      z-index: 1000; display: none; animation: up 0.3s ease;
+    }
+
     @keyframes up { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .pulse { animation: pulse 1.8s infinite; }
 
-    @media(max-width:500px) {
+    @media(max-width:480px) {
       .g2,.g3 { grid-template-columns: 1fr; }
       .dcard { flex-direction: column; align-items: flex-start; }
-      .main { padding: 16px 14px; }
     }
   </style>
 </head>
@@ -244,16 +344,51 @@
 
 <!-- DASHBOARD -->
 <div id="dashboard">
-  <nav class="sidebar">
-    <div class="sb-brand">A</div>
-    <div class="ni active" data-tip="Overview" onclick="showPage('overview',this)">📊</div>
-    <div class="ni" data-tip="Analytics" onclick="showPage('analytics',this)">📈</div>
-    <div class="ni" data-tip="Chats" onclick="showPage('chats',this)">💬</div>
-    <div class="ni" data-tip="Live Feed" onclick="showPage('feed',this)">⚡</div>
-    <div class="ni" data-tip="Controls" onclick="showPage('controls',this)">⚙️</div>
-    <div class="sb-space"></div>
-    <div class="sb-pip" id="spip"></div>
-  </nav>
+
+  <!-- TOP NAV -->
+  <div class="topnav">
+    <div class="ham" id="ham" onclick="toggleDrawer()">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="nav-brand">Aveline</div>
+    <div class="nav-page-name" id="nav-page-name">Overview</div>
+    <div class="nav-pip" id="nav-pip"></div>
+  </div>
+
+  <!-- DRAWER OVERLAY -->
+  <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+
+  <!-- DRAWER -->
+  <div class="drawer" id="drawer">
+    <div class="drawer-head">
+      <div class="drawer-logo">Aveline</div>
+      <div class="drawer-sub">Dashboard v1</div>
+    </div>
+    <div class="drawer-nav">
+      <div class="dni active" onclick="showPage('overview','Overview',this)">
+        <span class="dni-icon">📊</span>
+        <span class="dni-label">Overview</span>
+      </div>
+      <div class="dni" onclick="showPage('chats','Chats',this)">
+        <span class="dni-icon">💬</span>
+        <span class="dni-label">Chats</span>
+      </div>
+      <div class="dni" onclick="showPage('feed','Live Feed',this)">
+        <span class="dni-icon">⚡</span>
+        <span class="dni-label">Live Feed</span>
+      </div>
+      <div class="dni" onclick="showPage('controls','Controls',this)">
+        <span class="dni-icon">⚙️</span>
+        <span class="dni-label">Controls</span>
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <div class="drawer-status">
+        <div class="ds-dot" id="ds-dot"></div>
+        <span id="ds-status">Connecting...</span>
+      </div>
+    </div>
+  </div>
 
   <main class="main">
 
@@ -261,15 +396,17 @@
     <div class="page active" id="page-overview">
       <div class="topbar">
         <div><div class="pt">Overview</div><div class="ps">Real-time status and metrics</div></div>
-        <button class="rbtn" onclick="refreshAll()">↻ Refresh</button>
+        <button class="rbtn" onclick="refreshAll()">↻</button>
       </div>
+
       <div class="g4" style="margin-bottom:10px">
-        <div class="card"><div class="cl">Total Messages</div><div class="cv accent" id="ov-total">—</div><div class="csub">all time</div></div>
+        <div class="card"><div class="cl">Total</div><div class="cv accent" id="ov-total">—</div><div class="csub">all time</div></div>
         <div class="card"><div class="cl">Today</div><div class="cv" id="ov-today">—</div><div class="csub">since restart</div></div>
-        <div class="card"><div class="cl">Avg Response</div><div class="cv" id="ov-avgrt">—</div><div class="csub">milliseconds</div></div>
+        <div class="card"><div class="cl">Avg Speed</div><div class="cv" id="ov-avgrt">—</div><div class="csub">ms</div></div>
         <div class="card"><div class="cl">Rate Limits</div><div class="cv red" id="ov-rl">—</div><div class="csub">hits</div></div>
       </div>
-      <div class="g2">
+
+      <div class="g2" style="margin-bottom:10px">
         <div class="card">
           <div class="cl">Bot Status</div>
           <div class="srow"><div class="dot" id="ov-dot"></div><div class="stxt" id="ov-status">—</div></div>
@@ -281,43 +418,34 @@
           <div class="csub" id="ov-keys">—</div>
         </div>
       </div>
-      <div class="stitle">Key Usage</div>
-      <div class="card"><div class="kgrid" id="ov-kgrid"><div class="loading pulse" style="grid-column:1/-1">Loading...</div></div></div>
-    </div>
 
-    <!-- ANALYTICS -->
-    <div class="page" id="page-analytics">
-      <div class="topbar">
-        <div><div class="pt">Analytics</div><div class="ps">Model and key breakdown</div></div>
-        <button class="rbtn" onclick="loadStats()">↻ Refresh</button>
-      </div>
-      <div class="g3" style="margin-bottom:10px">
-        <div class="card"><div class="cl">Total Messages</div><div class="cv accent" id="an-total">—</div></div>
-        <div class="card"><div class="cl">Avg Response</div><div class="cv" id="an-avgrt">—<span style="font-size:13px;color:var(--muted);font-style:normal">ms</span></div></div>
-        <div class="card"><div class="cl">Rate Limit Hits</div><div class="cv red" id="an-rl">—</div></div>
-      </div>
       <div class="stitle">Model Usage</div>
-      <div class="card"><div class="bwrap" id="model-bars"><div class="loading pulse">Loading...</div></div></div>
-      <div class="stitle">Key Distribution</div>
-      <div class="card"><div class="bwrap" id="key-bars"><div class="loading pulse">Loading...</div></div></div>
+      <div class="card" style="margin-bottom:10px">
+        <div class="bwrap" id="model-bars"><div class="loading pulse">Loading...</div></div>
+      </div>
+
+      <div class="stitle">Key Usage</div>
+      <div class="card">
+        <div class="kgrid" id="ov-kgrid"><div class="loading pulse" style="grid-column:1/-1">Loading...</div></div>
+      </div>
     </div>
 
     <!-- CHATS -->
     <div class="page" id="page-chats">
       <div class="topbar">
-        <div><div class="pt">Chats</div><div class="ps">Per-chat controls</div></div>
-        <button class="rbtn" onclick="loadChats()">↻ Refresh</button>
+        <div><div class="pt">Chats</div><div class="ps">Per-chat memory controls</div></div>
+        <button class="rbtn" onclick="loadChats()">↻</button>
       </div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div class="twrap" id="chats-content"><div class="loading pulse">Loading...</div></div>
+      <div class="chat-cards" id="chats-content">
+        <div class="loading pulse">Loading...</div>
       </div>
     </div>
 
     <!-- FEED -->
     <div class="page" id="page-feed">
       <div class="topbar">
-        <div><div class="pt">Live Feed</div><div class="ps">Last 50 events</div></div>
-        <button class="rbtn" onclick="loadFeed()">↻ Refresh</button>
+        <div><div class="pt">Live Feed</div><div class="ps">Last 50 events — tap to expand</div></div>
+        <button class="rbtn" onclick="loadFeed()">↻</button>
       </div>
       <div class="flist" id="feed-list"><div class="loading pulse">Loading...</div></div>
     </div>
@@ -325,13 +453,15 @@
     <!-- CONTROLS -->
     <div class="page" id="page-controls">
       <div class="topbar"><div><div class="pt">Controls</div><div class="ps">Bot management</div></div></div>
+
       <div class="pcard">
-        <div class="power-info">
+        <div>
           <div class="title" id="power-title">Bot is Running</div>
           <div class="desc" id="power-desc">Tap to pause message processing</div>
         </div>
         <button class="pbtn" id="pbtn" onclick="toggleBot()">⏸</button>
       </div>
+
       <div class="stitle">Memory</div>
       <div class="dcard">
         <div>
@@ -350,7 +480,32 @@
 <script>
   const API = 'https://aveline-bot-production.up.railway.app';
   let token = localStorage.getItem('aveline_token') || '';
+  let expandedFeed = null;
 
+  // DRAWER
+  function toggleDrawer() {
+    const d = document.getElementById('drawer');
+    const o = document.getElementById('drawer-overlay');
+    const h = document.getElementById('ham');
+    const open = d.classList.contains('open');
+    if (open) {
+      d.classList.remove('open');
+      o.classList.remove('open');
+      h.classList.remove('open');
+    } else {
+      d.classList.add('open');
+      o.classList.add('open');
+      h.classList.add('open');
+    }
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('open');
+    document.getElementById('ham').classList.remove('open');
+  }
+
+  // LOGIN
   async function doLogin() {
     const user = document.getElementById('usr').value.trim();
     const pass = document.getElementById('pwd').value;
@@ -397,14 +552,15 @@
     })).then(r => r.json());
   }
 
-  function showPage(name, el) {
+  function showPage(name, label, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.dni').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
     el.classList.add('active');
+    document.getElementById('nav-page-name').textContent = label;
+    closeDrawer();
     if (name === 'chats') loadChats();
     if (name === 'feed') loadFeed();
-    if (name === 'analytics') loadStats();
   }
 
   async function refreshAll() {
@@ -414,17 +570,27 @@
   async function loadStatus() {
     try {
       const d = await api('/api/status');
-      const dot = document.getElementById('ov-dot');
-      const pip = document.getElementById('spip');
-      const stxt = document.getElementById('ov-status');
       const cls = !d.online ? 'off' : d.paused ? 'pause' : '';
-      dot.className = 'dot ' + cls;
-      pip.className = 'sb-pip ' + cls;
-      stxt.textContent = !d.online ? 'Offline' : d.paused ? 'Paused' : 'Online';
-      stxt.style.color = !d.online ? 'var(--red)' : d.paused ? 'var(--orange)' : 'var(--green)';
-      document.getElementById('ov-uptime').textContent = 'Uptime: ' + fmtUptime(d.uptime);
-      document.getElementById('ov-lastmsg').textContent = d.lastMessageAt ? timeAgo(d.lastMessageAt) : 'No messages yet';
-      document.getElementById('ov-keys').textContent = d.keysLoaded + ' Groq key(s) loaded';
+      ['ov-dot'].forEach(id => { const el = document.getElementById(id); if(el) { el.className = 'dot ' + cls; } });
+      ['ds-dot','nav-pip'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.className = (id === 'ds-dot' ? 'ds-dot ' : 'nav-pip ') + cls;
+        }
+      });
+      const stxt = document.getElementById('ov-status');
+      if (stxt) {
+        stxt.textContent = !d.online ? 'Offline' : d.paused ? 'Paused' : 'Online';
+        stxt.style.color = !d.online ? 'var(--red)' : d.paused ? 'var(--orange)' : 'var(--green)';
+      }
+      const dsStatus = document.getElementById('ds-status');
+      if (dsStatus) dsStatus.textContent = !d.online ? 'Offline' : d.paused ? 'Paused' : 'Online';
+      const upEl = document.getElementById('ov-uptime');
+      if (upEl) upEl.textContent = 'Uptime: ' + fmtUptime(d.uptime);
+      const lmEl = document.getElementById('ov-lastmsg');
+      if (lmEl) lmEl.textContent = d.lastMessageAt ? timeAgo(d.lastMessageAt) : 'No messages yet';
+      const kEl = document.getElementById('ov-keys');
+      if (kEl) kEl.textContent = d.keysLoaded + ' Groq key(s) loaded';
       updatePower(d.paused);
     } catch(e) {}
   }
@@ -432,14 +598,16 @@
   async function loadStats() {
     try {
       const d = await api('/api/stats');
-      ['ov-total','an-total'].forEach(id => document.getElementById(id).textContent = d.totalMessages);
-      ['ov-today'].forEach(id => document.getElementById(id).textContent = d.messagesToday);
-      ['ov-avgrt','an-avgrt'].forEach(id => document.getElementById(id).textContent = d.avgResponseTime);
-      ['ov-rl','an-rl'].forEach(id => document.getElementById(id).textContent = d.rateLimitHits);
+      const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+      set('ov-total', d.totalMessages);
+      set('ov-today', d.messagesToday);
+      set('ov-avgrt', d.avgResponseTime);
+      set('ov-rl', d.rateLimitHits);
 
       const models = d.modelUsage || {};
       const tm = Object.values(models).reduce((a,b)=>a+b,0)||1;
-      document.getElementById('model-bars').innerHTML = Object.keys(models).length === 0
+      const mb = document.getElementById('model-bars');
+      if (mb) mb.innerHTML = Object.keys(models).length === 0
         ? '<div class="loading">No data yet</div>'
         : Object.entries(models).map(([m,v]) =>
           '<div class="bi"><div class="bh"><span class="bl">'+m+'</span><span class="bv">'+v+'</span></div><div class="btrack"><div class="bfill" style="width:'+Math.round(v/tm*100)+'%"></div></div></div>'
@@ -447,18 +615,30 @@
 
       const keys = d.keyUsage || {};
       const tk = Object.values(keys).reduce((a,b)=>a+b,0)||1;
-      document.getElementById('key-bars').innerHTML = Object.keys(keys).length === 0
-        ? '<div class="loading">No data yet</div>'
-        : Object.entries(keys).map(([k,v]) =>
-          '<div class="bi"><div class="bh"><span class="bl">'+k.toUpperCase()+'</span><span class="bv">'+v+'</span></div><div class="btrack"><div class="bfill" style="width:'+Math.round(v/tk*100)+'%"></div></div></div>'
-        ).join('');
-
-      document.getElementById('ov-kgrid').innerHTML = Object.keys(keys).length === 0
+      const kg = document.getElementById('ov-kgrid');
+      if (kg) kg.innerHTML = Object.keys(keys).length === 0
         ? '<div class="loading" style="grid-column:1/-1">No key usage yet</div>'
         : Object.entries(keys).map(([k,v]) =>
           '<div class="kcard"><div class="kname">'+k.toUpperCase()+'</div><div class="kval">'+v+'</div><div class="ksub">calls</div></div>'
         ).join('');
     } catch(e) {}
+  }
+
+  // NAME FORMATTER — show readable name from JID
+  function fmtChatName(id) {
+    if (!id) return 'Unknown';
+    // Group
+    if (id.endsWith('@g.us')) {
+      const num = id.replace('@g.us','');
+      return 'Group ' + num.slice(-6);
+    }
+    // LID
+    if (id.endsWith('@lid')) {
+      return 'User ' + id.replace('@lid','').slice(-6);
+    }
+    // Standard JID
+    const num = id.split('@')[0].split(':')[0];
+    return '+' + num;
   }
 
   async function loadChats() {
@@ -468,20 +648,27 @@
       const chats = await api('/api/chats');
       if (!chats.length) { w.innerHTML = '<div class="loading">No chats yet</div>'; return; }
       const me = { happy:'😊', neutral:'😐', teasing:'😏', annoyed:'😒', affectionate:'🥰' };
-      w.innerHTML = '<table><thead><tr><th>Chat</th><th>Type</th><th>Msgs</th><th>Mood</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
-        + chats.map(c =>
-          '<tr><td><span class="cid">'+c.id+'</span></td>'
-          + '<td><span class="badge '+(c.isGroup?'bg':'bd')+'">'+(c.isGroup?'Group':'DM')+'</span></td>'
-          + '<td>'+c.messageCount+'</td>'
-          + '<td>'+(me[c.mood]||'😐')+' '+c.mood+'</td>'
-          + '<td><span class="badge '+(c.blacklisted?'bb':'ba')+'">'+(c.blacklisted?'Blocked':'Active')+'</span></td>'
-          + '<td><div class="agroup">'
-          + '<button class="abtn d" onclick="purgeChat(\''+encodeURIComponent(c.id)+'\')">Purge</button>'
-          + '<button class="abtn w" onclick="resetMood(\''+encodeURIComponent(c.id)+'\')">Reset Mood</button>'
-          + '<button class="abtn '+(c.blacklisted?'':'d')+'" onclick="toggleBL(\''+encodeURIComponent(c.id)+'\')">'+(c.blacklisted?'Unblock':'Block')+'</button>'
-          + '</div></td></tr>'
-        ).join('')
-        + '</tbody></table>';
+      w.innerHTML = chats.map(c => {
+        const name = fmtChatName(c.id);
+        const isGroup = c.isGroup;
+        return '<div class="chat-card">'
+          + '<div class="cc-top">'
+          + '<div class="cc-name">' + name + '</div>'
+          + '<span class="badge ' + (isGroup?'bg':'bd') + '">' + (isGroup?'Group':'DM') + '</span>'
+          + '<span class="badge ' + (c.blacklisted?'bb':'ba') + '">' + (c.blacklisted?'Blocked':'Active') + '</span>'
+          + '</div>'
+          + '<div class="cc-id">' + c.id + '</div>'
+          + '<div class="cc-info">'
+          + '<div class="cc-info-item">Messages: <span>' + c.messageCount + '</span></div>'
+          + '<div class="cc-info-item">Mood: <span>' + (me[c.mood]||'😐') + ' ' + c.mood + '</span></div>'
+          + '</div>'
+          + '<div class="agroup">'
+          + '<button class="abtn d" onclick="purgeChat(\''+encodeURIComponent(c.id)+'\')">🗑 Purge Memory</button>'
+          + '<button class="abtn w" onclick="resetMood(\''+encodeURIComponent(c.id)+'\')">🔄 Reset Mood</button>'
+          + '<button class="abtn '+(c.blacklisted?'':'d')+'" onclick="toggleBL(\''+encodeURIComponent(c.id)+'\')">'+(c.blacklisted?'✅ Unblock':'🚫 Block')+'</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
     } catch(e) { w.innerHTML = '<div class="loading">Failed to load</div>'; }
   }
 
@@ -492,11 +679,54 @@
       const feed = await api('/api/feed');
       if (!feed.length) { w.innerHTML = '<div class="loading">No events yet</div>'; return; }
       const me = { happy:'😊', neutral:'😐', teasing:'😏', annoyed:'😒', affectionate:'🥰' };
-      w.innerHTML = feed.map(f => {
-        if (f.type === 'system') return '<div class="fi sys"><span class="ftag sys">SYS</span><div class="fb"><span class="fn">'+f.message+'</span></div><div class="fm">'+timeAgo(f.timestamp)+'</div></div>';
-        return '<div class="fi"><span class="ftag msg">'+(f.isGroup?'GRP':'DM')+'</span><div class="fb"><span class="fn">'+(f.name||'Unknown')+'</span><span class="ft">→ '+(f.text||'')+'</span><span class="fr">← '+(f.reply||'')+'</span></div><div class="fm">'+timeAgo(f.timestamp)+'<span>'+(me[f.mood]||'')+' '+(f.mood||'')+'</span><span>'+(f.responseTime||0)+'ms</span></div></div>';
+      w.innerHTML = feed.map((f, i) => {
+        if (f.type === 'system') {
+          return '<div class="fi sys" onclick="expandFeed('+i+',this)">'
+            + '<div class="fi-top">'
+            + '<span class="ftag sys">SYS</span>'
+            + '<div class="fi-body"><div class="fn">' + (f.message||'') + '</div></div>'
+            + '<div class="fi-meta"><div class="fi-time">'+timeAgo(f.timestamp)+'</div></div>'
+            + '</div></div>';
+        }
+        const name = f.name || fmtChatName(f.from) || 'Unknown';
+        return '<div class="fi" onclick="expandFeed('+i+',this)">'
+          + '<div class="fi-top">'
+          + '<span class="ftag msg">'+(f.isGroup?'GRP':'DM')+'</span>'
+          + '<div class="fi-body">'
+          + '<div class="fn">'+name+'</div>'
+          + '<div class="ft-preview">'+escHtml(f.text||'')+'</div>'
+          + '</div>'
+          + '<div class="fi-meta">'
+          + '<div class="fi-time">'+timeAgo(f.timestamp)+'</div>'
+          + '<div class="fi-mood">'+(me[f.mood]||'')+'</div>'
+          + '<div class="fi-arrow">▾</div>'
+          + '</div>'
+          + '</div>'
+          + '<div class="fi-expand">'
+          + '<div class="fi-expand-row"><div class="fi-expand-label">Message</div><div class="fi-expand-text">'+escHtml(f.text||'—')+'</div></div>'
+          + '<div class="fi-expand-row"><div class="fi-expand-label">Reply</div><div class="fi-expand-text reply">'+escHtml(f.reply||'—')+'</div></div>'
+          + '<div class="fi-expand-stats">'
+          + '<div class="fi-stat">Mood: <span>'+(f.mood||'—')+'</span></div>'
+          + '<div class="fi-stat">Response: <span>'+(f.responseTime||0)+'ms</span></div>'
+          + '<div class="fi-stat">Type: <span>'+(f.isGroup?'Group':'DM')+'</span></div>'
+          + '</div>'
+          + '</div>'
+          + '</div>';
       }).join('');
     } catch(e) { w.innerHTML = '<div class="loading">Failed to load</div>'; }
+  }
+
+  function expandFeed(idx, el) {
+    if (el.classList.contains('sys')) return;
+    if (expandedFeed && expandedFeed !== el) {
+      expandedFeed.classList.remove('expanded');
+    }
+    el.classList.toggle('expanded');
+    expandedFeed = el.classList.contains('expanded') ? el : null;
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   async function toggleBot() {
@@ -510,8 +740,11 @@
 
   function updatePower(paused) {
     const btn = document.getElementById('pbtn');
-    document.getElementById('power-title').textContent = paused ? 'Bot is Paused' : 'Bot is Running';
-    document.getElementById('power-desc').textContent = paused ? 'Tap to resume message processing' : 'Tap to pause message processing';
+    const ti = document.getElementById('power-title');
+    const de = document.getElementById('power-desc');
+    if (!btn) return;
+    ti.textContent = paused ? 'Bot is Paused' : 'Bot is Running';
+    de.textContent = paused ? 'Tap to resume message processing' : 'Tap to pause message processing';
     btn.className = paused ? 'pbtn pause' : 'pbtn';
     btn.textContent = paused ? '▶' : '⏸';
   }
@@ -546,13 +779,13 @@
   function fmtUptime(ms) {
     if (!ms) return '—';
     const s = Math.floor(ms/1000), m = Math.floor(s/60), h = Math.floor(m/60), d = Math.floor(h/24);
-    if (d > 0) return d+'d '+( h%24)+'h';
+    if (d > 0) return d+'d '+(h%24)+'h';
     if (h > 0) return h+'h '+(m%60)+'m';
     return m+'m '+(s%60)+'s';
   }
 
   function timeAgo(ts) {
-    const d = Date.now() - ts, s = Math.floor(d/1000), m = Math.floor(s/60), h = Math.floor(m/60);
+    const d = Date.now()-ts, s = Math.floor(d/1000), m = Math.floor(s/60), h = Math.floor(m/60);
     if (s < 60) return s+'s ago';
     if (m < 60) return m+'m ago';
     if (h < 24) return h+'h ago';
