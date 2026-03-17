@@ -245,6 +245,7 @@
       <div class="dni" onclick="showPage('chats','Chats',this)"><span class="dni-icon">💬</span><span class="dni-label">Chats</span></div>
       <div class="dni" onclick="showPage('feed','Live Feed',this)"><span class="dni-icon">⚡</span><span class="dni-label">Live Feed</span></div>
       <div class="dni" onclick="showPage('controls','Controls',this)"><span class="dni-icon">⚙️</span><span class="dni-label">Controls</span></div>
+      <div class="dni" onclick="showPage('announce','Announce',this)"><span class="dni-icon">📢</span><span class="dni-label">Announce</span></div>
     </div>
     <div class="drawer-foot">
       <div class="drawer-status"><div class="ds-dot" id="ds-dot"></div><span id="ds-status">Connecting...</span></div>
@@ -324,6 +325,39 @@
       <div class="dcard">
         <div><div class="dtitle">Purge All Memory</div><div class="ddesc">Wipes all history and moods. Cannot be undone.</div></div>
         <button class="dbtn" onclick="purgeAll()">Purge All</button>
+      </div>
+    </div>
+
+    <!-- ANNOUNCE -->
+    <div class="page" id="page-announce">
+      <div class="topbar"><div><div class="pt">Announce</div><div class="ps">Send a message to all chats</div></div></div>
+
+      <div class="card">
+        <div class="cl">Message</div>
+        <textarea id="ann-text" placeholder="Type your announcement..." rows="5" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;resize:vertical;margin-top:4px;line-height:1.5;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+
+        <div class="cl" style="margin-top:16px">Send To</div>
+        <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
+            <input type="checkbox" id="ann-dms" checked style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer" />
+            <span>Direct Messages</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
+            <input type="checkbox" id="ann-groups" checked style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer" />
+            <span>Groups</span>
+          </label>
+        </div>
+
+        <div id="ann-status" style="display:none;margin-top:16px;padding:12px;background:var(--surface2);border-radius:var(--rs);font-size:12px;color:var(--dim)"></div>
+
+        <button id="ann-btn" onclick="sendAnnouncement()" style="margin-top:16px;width:100%;background:var(--accent);color:#0a0a0a;border:none;border-radius:var(--rs);padding:13px;font-size:13px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:opacity 0.2s;font-family:inherit;">
+          Send Announcement
+        </button>
+      </div>
+
+      <div class="stitle">Preview</div>
+      <div class="card" style="font-size:13px;color:var(--dim);font-style:italic" id="ann-preview">
+        Your message will appear here...
       </div>
     </div>
 
@@ -606,6 +640,58 @@
   function timeAgo(ts) {
     const d=Date.now()-ts,s=Math.floor(d/1000),m=Math.floor(s/60),h=Math.floor(m/60);
     if(s<60) return s+'s ago'; if(m<60) return m+'m ago'; if(h<24) return h+'h ago'; return Math.floor(h/24)+'d ago';
+  }
+
+  // Live preview
+  document.addEventListener('DOMContentLoaded', () => {
+    const ta = document.getElementById('ann-text');
+    if (ta) ta.addEventListener('input', () => {
+      const prev = document.getElementById('ann-preview');
+      if (prev) prev.textContent = ta.value || 'Your message will appear here...';
+    });
+  });
+
+  async function sendAnnouncement() {
+    const msg = document.getElementById('ann-text').value.trim();
+    const sendToDMs = document.getElementById('ann-dms').checked;
+    const sendToGroups = document.getElementById('ann-groups').checked;
+    const btn = document.getElementById('ann-btn');
+    const status = document.getElementById('ann-status');
+
+    if (!msg) { showToast('Type a message first'); return; }
+    if (!sendToDMs && !sendToGroups) { showToast('Select at least one target'); return; }
+    if (!confirm('Send this announcement to all selected chats?')) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    btn.style.opacity = '0.6';
+    status.style.display = 'block';
+    status.style.color = 'var(--dim)';
+    status.textContent = 'Sending announcement... this may take a while due to rate limiting delays.';
+
+    try {
+      const d = await api('/api/announce', {
+        method: 'POST',
+        body: JSON.stringify({ message: msg, sendToDMs, sendToGroups })
+      });
+
+      if (d.success) {
+        status.style.color = 'var(--green)';
+        status.textContent = 'Done! Sent to ' + d.sent + ' chat(s).' + (d.failed > 0 ? ' ' + d.failed + ' failed.' : '');
+        document.getElementById('ann-text').value = '';
+        document.getElementById('ann-preview').textContent = 'Your message will appear here...';
+      } else {
+        status.style.color = 'var(--red)';
+        status.textContent = 'Error: ' + (d.error || 'Unknown error');
+      }
+    } catch(e) {
+      status.style.color = 'var(--red)';
+      status.textContent = 'Connection failed';
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Send Announcement';
+    btn.style.opacity = '1';
   }
 
   function showToast(msg) {
