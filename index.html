@@ -198,6 +198,22 @@
     .dbtn { background:rgba(255,95,95,0.1); border:1px solid rgba(255,95,95,0.25); border-radius:var(--rs); padding:9px 16px; color:var(--red); font-size:11px; font-weight:800; font-style:italic; text-transform:uppercase; letter-spacing:1px; cursor:pointer; font-family:inherit; transition:all 0.2s; flex-shrink:0; }
     .dbtn:hover { background:rgba(255,95,95,0.18); }
 
+    /* STICKER GRID */
+    .sticker-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+    .sticker-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--rs); padding:10px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .sticker-img { width:80px; height:80px; object-fit:contain; border-radius:6px; background:var(--surface); }
+    .sticker-meta { font-size:10px; color:var(--muted); text-align:center; }
+    .sticker-actions { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
+    .sticker-select { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:5px; padding:5px 6px; color:var(--text); font-size:11px; font-family:inherit; outline:none; cursor:pointer; }
+    .sticker-select:focus { border-color:var(--accent); }
+    .capture-toggle { display:flex; align-items:center; justify-content:space-between; padding:16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); margin-bottom:16px; }
+    .capture-info .title { font-size:15px; font-weight:800; font-style:italic; }
+    .capture-info .desc { font-size:11px; color:var(--muted); margin-top:3px; }
+    .capture-btn { padding:9px 18px; border-radius:var(--rs); font-size:12px; font-weight:800; font-style:italic; text-transform:uppercase; letter-spacing:1px; cursor:pointer; font-family:inherit; transition:all 0.2s; border:2px solid var(--dim); color:var(--dim); background:none; }
+    .capture-btn.on { border-color:var(--green); color:var(--green); background:rgba(95,255,154,0.07); }
+    .mood-section { margin-bottom:20px; }
+    .mood-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+
     .loading { color:var(--muted); font-size:12px; padding:20px; text-align:center; }
     .toast { position:fixed; bottom:20px; right:20px; background:var(--surface); border:1px solid var(--accent); border-radius:var(--rs); padding:10px 16px; font-size:13px; font-weight:600; color:var(--accent); z-index:1000; display:none; animation:up 0.3s ease; }
 
@@ -247,6 +263,7 @@
       <div class="dni" onclick="showPage('feed','Live Feed',this)"><span class="dni-icon">⚡</span><span class="dni-label">Live Feed</span></div>
       <div class="dni" onclick="showPage('controls','Controls',this)"><span class="dni-icon">⚙️</span><span class="dni-label">Controls</span></div>
       <div class="dni" onclick="showPage('announce','Announce',this)"><span class="dni-icon">📢</span><span class="dni-label">Announce</span></div>
+      <div class="dni" onclick="showPage('stickers','Stickers',this)"><span class="dni-icon">🎭</span><span class="dni-label">Stickers</span></div>
     </div>
     <div class="drawer-foot">
       <div class="drawer-status"><div class="ds-dot" id="ds-dot"></div><span id="ds-status">Connecting...</span></div>
@@ -362,6 +379,42 @@
       </div>
     </div>
 
+    <!-- STICKERS -->
+    <div class="page" id="page-stickers">
+      <div class="topbar">
+        <div><div class="pt">Stickers</div><div class="ps">Capture and classify stickers for Aveline</div></div>
+        <button class="rbtn" onclick="loadStickers()">↻</button>
+      </div>
+
+      <!-- Capture toggle -->
+      <div class="capture-toggle">
+        <div class="capture-info">
+          <div class="title" id="cap-title">Capture Mode Off</div>
+          <div class="desc" id="cap-desc">Enable to capture stickers sent to the bot</div>
+        </div>
+        <button class="capture-btn" id="cap-btn" onclick="toggleCapture()">OFF</button>
+      </div>
+
+      <!-- Standby -->
+      <div class="mood-section">
+        <div class="mood-header">
+          <div class="stitle" style="margin:0">Standby</div>
+          <button class="abtn d" onclick="clearStandby()">🗑 Clear All</button>
+        </div>
+        <div class="sticker-grid" id="standby-grid"><div class="loading">No stickers captured yet</div></div>
+      </div>
+
+      <!-- Mood directories -->
+      <div id="mood-sections"></div>
+
+      <!-- Danger -->
+      <div class="stitle">Danger Zone</div>
+      <div class="dcard">
+        <div><div class="dtitle">Clear All Stickers</div><div class="ddesc">Removes all stickers from all moods and standby.</div></div>
+        <button class="dbtn" onclick="clearAllStickers()">Clear All</button>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -467,6 +520,7 @@
     closeDrawer();
     if (name === 'chats') loadChats();
     if (name === 'feed') loadFeed();
+    if (name === 'stickers') loadStickers();
   }
 
   async function refreshAll() { await Promise.all([loadStatus(), loadStats()]); }
@@ -733,6 +787,147 @@
     btn.disabled = false;
     btn.textContent = 'Send Announcement';
     btn.style.opacity = '1';
+  }
+
+  // STICKERS
+  const MOODS = ["happy","neutral","teasing","annoyed","affectionate"];
+  const MOOD_EMOJI = {happy:"😊",neutral:"😐",teasing:"😏",annoyed:"😒",affectionate:"🥰"};
+
+  async function loadStickers() {
+    await loadCaptureStatus();
+    await loadStandby();
+    await loadMoodSections();
+  }
+
+  async function loadCaptureStatus() {
+    try {
+      const d = await api('/api/stickers/status');
+      updateCaptureBtn(d.captureMode);
+    } catch {}
+  }
+
+  function updateCaptureBtn(on) {
+    const btn = document.getElementById('cap-btn');
+    const title = document.getElementById('cap-title');
+    const desc = document.getElementById('cap-desc');
+    btn.className = on ? 'capture-btn on' : 'capture-btn';
+    btn.textContent = on ? 'ON' : 'OFF';
+    title.textContent = on ? 'Capture Mode On' : 'Capture Mode Off';
+    desc.textContent = on ? 'Bot is capturing stickers sent to it' : 'Enable to capture stickers sent to the bot';
+  }
+
+  async function toggleCapture() {
+    try {
+      const d = await api('/api/stickers/capture', { method:'POST' });
+      updateCaptureBtn(d.captureMode);
+      showToast(d.captureMode ? 'Capture mode enabled' : 'Capture mode disabled');
+    } catch { showToast('Failed'); }
+  }
+
+  async function loadStandby() {
+    const grid = document.getElementById('standby-grid');
+    grid.innerHTML = '<div class="loading pulse">Loading...</div>';
+    try {
+      const stickers = await api('/api/stickers/standby');
+      if (!stickers.length) { grid.innerHTML = '<div class="loading">No stickers captured yet</div>'; return; }
+      grid.innerHTML = stickers.map(s =>
+        '<div class="sticker-card" id="sc-'+s.id+'">'
+        + '<img class="sticker-img" src="'+s.url+'" onerror="this.src='';this.style.background='var(--surface2)'" />'
+        + '<div class="sticker-meta">'+(s.isAnimated?'Animated':'Static')+'</div>'
+        + '<select class="sticker-select" id="sel-'+s.id+'">'
+        + '<option value="">— classify —</option>'
+        + MOODS.map(m => '<option value="'+m+'">'+MOOD_EMOJI[m]+' '+m+'</option>').join('')
+        + '</select>'
+        + '<div class="sticker-actions">'
+        + '<button class="abtn" onclick="classifySticker(''+s.id+'')">✓ Save</button>'
+        + '<button class="abtn d" onclick="deleteSticker('standby','none',''+s.id+'')">✕</button>'
+        + '</div>'
+        + '</div>'
+      ).join('');
+    } catch { grid.innerHTML = '<div class="loading">Failed to load</div>'; }
+  }
+
+  async function loadMoodSections() {
+    const wrap = document.getElementById('mood-sections');
+    wrap.innerHTML = '';
+    for (const mood of MOODS) {
+      try {
+        const stickers = await api('/api/stickers/mood/'+mood);
+        const section = document.createElement('div');
+        section.className = 'mood-section';
+        section.innerHTML = '<div class="mood-header">'
+          + '<div class="stitle" style="margin:0">'+MOOD_EMOJI[mood]+' '+mood.charAt(0).toUpperCase()+mood.slice(1)+'</div>'
+          + '<button class="abtn d" onclick="clearMood(''+mood+'')">🗑 Clear</button>'
+          + '</div>'
+          + (stickers.length === 0
+            ? '<div class="loading" style="padding:12px">No stickers yet</div>'
+            : '<div class="sticker-grid">'
+              + stickers.map(s =>
+                '<div class="sticker-card" id="sc-'+s.id+'">'
+                + '<img class="sticker-img" src="'+s.url+'" onerror="this.src=''" />'
+                + '<div class="sticker-meta">'+(s.isAnimated?'Animated':'Static')+'</div>'
+                + '<button class="abtn d" onclick="deleteSticker('mood',''+mood+'',''+s.id+'')">✕ Delete</button>'
+                + '</div>'
+              ).join('')
+              + '</div>');
+        wrap.appendChild(section);
+      } catch {}
+    }
+  }
+
+  async function classifySticker(id) {
+    const sel = document.getElementById('sel-'+id);
+    const mood = sel ? sel.value : '';
+    if (!mood) { showToast('Select a mood first'); return; }
+    try {
+      await api('/api/stickers/classify', { method:'POST', body:JSON.stringify({id, mood}) });
+      // Remove from standby grid immediately
+      const card = document.getElementById('sc-'+id);
+      if (card) card.remove();
+      showToast('Classified as '+mood);
+      // Reload mood sections to show new sticker
+      await loadMoodSections();
+    } catch { showToast('Failed'); }
+  }
+
+  async function deleteSticker(type, mood, id) {
+    if (!confirm('Delete this sticker?')) return;
+    try {
+      await fetch(API+'/api/stickers/'+type+'/'+mood+'/'+id, {
+        method:'DELETE',
+        headers:{'Authorization':'Bearer '+token}
+      });
+      const card = document.getElementById('sc-'+id);
+      if (card) card.remove();
+      showToast('Deleted');
+    } catch { showToast('Failed'); }
+  }
+
+  async function clearStandby() {
+    if (!confirm('Clear all standby stickers?')) return;
+    try {
+      await fetch(API+'/api/stickers/standby/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+      showToast('Standby cleared');
+      loadStandby();
+    } catch { showToast('Failed'); }
+  }
+
+  async function clearMood(mood) {
+    if (!confirm('Clear all '+mood+' stickers?')) return;
+    try {
+      await fetch(API+'/api/stickers/mood/'+mood+'/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+      showToast(mood+' stickers cleared');
+      loadMoodSections();
+    } catch { showToast('Failed'); }
+  }
+
+  async function clearAllStickers() {
+    if (!confirm('Delete ALL stickers from every mood and standby?')) return;
+    try {
+      await fetch(API+'/api/stickers/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
+      showToast('All stickers cleared');
+      loadStickers();
+    } catch { showToast('Failed'); }
   }
 
   function showToast(msg) {
