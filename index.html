@@ -221,7 +221,8 @@
     <div class="lf"><label>Username</label><input type="text" id="usr" placeholder="username" autocomplete="off" /></div>
     <div class="lf"><label>Password</label><input type="password" id="pwd" placeholder="password" autocomplete="off" /></div>
     <div class="l-err" id="lerr">Invalid credentials</div>
-    <button class="l-btn" onclick="doLogin()">Enter Dashboard</button>
+    <div id="l-attempts" style="font-size:11px;color:var(--dim);text-align:center;display:none"></div>
+    <button class="l-btn" id="l-btn" onclick="doLogin()">Enter Dashboard</button>
   </div>
 </div>
 
@@ -388,18 +389,58 @@
     const user = document.getElementById('usr').value.trim();
     const pass = document.getElementById('pwd').value;
     const err = document.getElementById('lerr');
+    const attempts = document.getElementById('l-attempts');
+    const btn = document.getElementById('l-btn');
     err.style.display = 'none';
+    attempts.style.display = 'none';
+
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.textContent = 'Verifying...';
+
     try {
       const res = await fetch(API + '/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:user, password:pass}) });
       const data = await res.json();
+
       if (data.token) {
         token = data.token;
         localStorage.setItem('aveline_token', token);
         document.getElementById('login-page').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         refreshAll(); setInterval(refreshAll, 15000);
-      } else { err.style.display = 'block'; }
-    } catch { err.textContent = 'Connection failed'; err.style.display = 'block'; }
+      } else if (data.error === 'locked') {
+        err.textContent = 'Access temporarily disabled. Try again in ' + data.minutesLeft + ' minute' + (data.minutesLeft !== 1 ? 's' : '') + '.';
+        err.style.display = 'block';
+        attempts.style.display = 'none';
+        btn.disabled = true;
+        btn.style.opacity = '0.4';
+        btn.textContent = 'Locked';
+        // Auto re-enable after lockout
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.textContent = 'Enter Dashboard';
+          err.style.display = 'none';
+        }, data.minutesLeft * 60 * 1000);
+      } else {
+        err.textContent = 'Incorrect credentials.';
+        err.style.display = 'block';
+        if (data.attemptsLeft !== undefined) {
+          attempts.textContent = data.attemptsLeft + ' attempt' + (data.attemptsLeft !== 1 ? 's' : '') + ' remaining.';
+          attempts.style.display = 'block';
+          attempts.style.color = data.attemptsLeft <= 2 ? 'var(--red)' : 'var(--dim)';
+        }
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.textContent = 'Enter Dashboard';
+      }
+    } catch {
+      err.textContent = 'Connection failed. Try again.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.textContent = 'Enter Dashboard';
+    }
   }
 
   document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') doLogin(); });
