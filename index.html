@@ -926,30 +926,32 @@
   }
 
   async function clearStandby() {
-    if (!confirm('Clear all standby stickers?')) return;
     try {
-      await fetch(API+'/api/stickers/standby/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
-      showToast('Standby cleared');
-      loadStandby();
-    } catch { showToast('Failed'); }
+      const r = await fetch(API+'/api/stickers/standby/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'} });
+      const d = await r.json();
+      if (d.success) { showToast('Standby cleared'); loadStandby(); }
+      else showToast('Error: ' + (d.error || 'unknown'));
+    } catch(e) { alert('clearStandby error: '+e.message); showToast('Failed'); }
   }
 
   async function clearMood(mood) {
-    if (!confirm('Clear all '+mood+' stickers?')) return;
     try {
-      await fetch(API+'/api/stickers/mood/'+mood+'/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
-      showToast(mood+' stickers cleared');
-      loadMoodSections();
-    } catch { showToast('Failed'); }
+      const r = await fetch(API+'/api/stickers/mood/'+mood+'/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'} });
+      const d = await r.json();
+      if (d.success) { showToast(mood+' stickers cleared'); loadMoodSections(); }
+      else showToast('Error: ' + (d.error || 'unknown'));
+    } catch(e) { alert('clearMood error: '+e.message); showToast('Failed'); }
   }
 
   async function clearAllStickers() {
-    if (!confirm('Delete ALL stickers from every mood and standby?')) return;
     try {
-      await fetch(API+'/api/stickers/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
-      showToast('All stickers cleared');
-      loadStickers();
-    } catch { showToast('Failed'); }
+      alert('token: ' + token + ' | API: ' + API);
+      const r = await fetch(API+'/api/stickers/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'} });
+      alert('status: ' + r.status);
+      const d = await r.json();
+      if (d.success) { showToast('Cleared '+d.cleared+' stickers'); loadStickers(); }
+      else showToast('Error: ' + (d.error || 'unknown'));
+    } catch(e) { alert('clearAll error: '+e.message); showToast('Failed'); }
   }
 
   function showToast(msg) {
