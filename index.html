@@ -851,8 +851,9 @@
       if (!stickers.length) { grid.innerHTML = '<div class="loading">No stickers captured yet</div>'; return; }
       grid.innerHTML = stickers.map(s => {
         const opts = MOODS.map(m => `<option value="${m}">${MOOD_EMOJI[m]} ${m}</option>`).join('');
+        const imgSrc = s.base64 ? `data:image/webp;base64,${s.base64}` : s.url || '';
         return `<div class="sticker-card" id="sc-${s.id}">
-          <img class="sticker-img" src="${s.url}" onerror="this.style.background='var(--surface2)'" />
+          <img class="sticker-img" src="${imgSrc}" onerror="this.style.background='var(--surface2)'" />
           <div class="sticker-meta">${s.isAnimated ? 'Animated' : 'Static'}</div>
           <select class="sticker-select" id="sel-${s.id}">
             <option value="">— classify —</option>${opts}
@@ -884,7 +885,7 @@
         } else {
           inner += '<div class="sticker-grid">' + stickers.map(s =>
             `<div class="sticker-card" id="sc-${s.id}">
-              <img class="sticker-img" src="${s.url}" onerror="this.style.background='var(--surface2)'" />
+              <img class="sticker-img" src="${s.base64 ? 'data:image/webp;base64,' + s.base64 : s.url || ''}" onerror="this.style.background='var(--surface2)'" />
               <div class="sticker-meta">${s.isAnimated ? 'Animated' : 'Static'}</div>
               <button class="abtn d" onclick="deleteSticker('mood','${mood}','${s.id}')">✕ Delete</button>
             </div>`
