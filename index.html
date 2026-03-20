@@ -214,6 +214,9 @@
     .mood-section { margin-bottom:20px; }
     .mood-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 
+    .sticker-toggle { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; font-family:inherit; transition:all 0.2s; border:1px solid var(--border); background:none; color:var(--muted); }
+    .sticker-toggle.on { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+    .sticker-toggle.off { border-color:var(--border); color:var(--muted); }
     .loading { color:var(--muted); font-size:12px; padding:20px; text-align:center; }
     .toast { position:fixed; bottom:20px; right:20px; background:var(--surface); border:1px solid var(--accent); border-radius:var(--rs); padding:10px 16px; font-size:13px; font-weight:600; color:var(--accent); z-index:1000; display:none; animation:up 0.3s ease; }
 
@@ -621,6 +624,7 @@
                   <button class="abtn d" onclick="purgeChat(event,'${gid}')">🗑 Purge Memory</button>
                   <button class="abtn w" onclick="resetMood(event,'${gid}')">🔄 Reset Mood</button>
                   <button class="abtn ${gBlocked ? '' : 'd'}" onclick="toggleBL(event,'${gid}')">${gBlocked ? '✅ Unblock' : '🚫 Block Group'}</button>
+                  <button class="sticker-toggle ${c.stickerEnabled ? 'on' : 'off'}" onclick="toggleSticker(event,'${c.id}',this)">${c.stickerEnabled ? '🎭 Stickers On' : '🎭 Stickers Off'}</button>
                 </div>
               </div>
               ${membersHtml}
@@ -648,6 +652,7 @@
               <button class="abtn d" onclick="purgeChat(event,'${cid}')">🗑 Purge</button>
               <button class="abtn w" onclick="resetMood(event,'${cid}')">🔄 Reset Mood</button>
               <button class="abtn ${blocked ? '' : 'd'}" onclick="toggleBL(event,'${cid}')">${blocked ? '✅ Unblock' : '🚫 Block'}</button>
+              <button class="sticker-toggle ${c.stickerEnabled ? 'on' : 'off'}" onclick="toggleSticker(event,'${c.id}',this)">${c.stickerEnabled ? '🎭 Stickers On' : '🎭 Stickers Off'}</button>
             </div>
           </div>`;
         });
@@ -926,32 +931,43 @@
   }
 
   async function clearStandby() {
+    if (!confirm('Clear all standby stickers?')) return;
     try {
       const r = await fetch(API+'/api/stickers/standby/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'} });
       const d = await r.json();
       if (d.success) { showToast('Standby cleared'); loadStandby(); }
       else showToast('Error: ' + (d.error || 'unknown'));
-    } catch(e) { alert('clearStandby error: '+e.message); showToast('Failed'); }
+    } catch(e) { showToast('Failed: '+e.message); }
   }
 
   async function clearMood(mood) {
+    if (!confirm('Clear all '+mood+' stickers?')) return;
     try {
       const r = await fetch(API+'/api/stickers/mood/'+mood+'/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'} });
       const d = await r.json();
       if (d.success) { showToast(mood+' stickers cleared'); loadMoodSections(); }
       else showToast('Error: ' + (d.error || 'unknown'));
-    } catch(e) { alert('clearMood error: '+e.message); showToast('Failed'); }
+    } catch(e) { showToast('Failed: '+e.message); }
   }
 
   async function clearAllStickers() {
+    if (!confirm('Delete ALL stickers from every mood and standby?')) return;
     try {
-      alert('token: ' + token + ' | API: ' + API);
       const r = await fetch(API+'/api/stickers/all', { method:'DELETE', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'} });
-      alert('status: ' + r.status);
       const d = await r.json();
       if (d.success) { showToast('Cleared '+d.cleared+' stickers'); loadStickers(); }
       else showToast('Error: ' + (d.error || 'unknown'));
-    } catch(e) { alert('clearAll error: '+e.message); showToast('Failed'); }
+    } catch(e) { showToast('Failed: '+e.message); }
+  }
+
+  async function toggleSticker(e, chatId, btn) {
+    e.stopPropagation();
+    try {
+      const d = await api('/api/stickers/toggle/'+encodeURIComponent(chatId), { method:'POST' });
+      btn.className = 'sticker-toggle ' + (d.enabled ? 'on' : 'off');
+      btn.textContent = (d.enabled ? '🎭 Stickers On' : '🎭 Stickers Off');
+      showToast('Stickers ' + (d.enabled ? 'enabled' : 'disabled'));
+    } catch { showToast('Failed'); }
   }
 
   function showToast(msg) {
