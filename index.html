@@ -23,7 +23,11 @@
 
         const source = (await response.text())
           .replaceAll(OLD_API, NEW_API)
-          .replace('</body>', '<script src="/debug-addon.js?v=20260805-1"><\/script></body>');
+          .replace(
+            '</body>',
+            '<script src="/debug-addon.js?v=20260805-2"><\/script>' +
+            '<script src="/debug-health-addon.js?v=20260805-2"><\/script></body>'
+          );
 
         document.open();
         document.write(source);
