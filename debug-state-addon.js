@@ -3,6 +3,8 @@
 (() => {
   const STORAGE_KEY = "aveline.debug.openTraceIds.v1";
   const openTraceIds = new Set(loadOpenTraceIds());
+  const panelScrollState = new Map();
+  const nestedOpenState = new Map();
 
   let observer = null;
   let anchor = null;
@@ -41,6 +43,89 @@
     return list ? [...list.querySelectorAll(":scope > details.debug-trace")] : [];
   }
 
+  function normalizeText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function codePanelBase(panel, card) {
+    const stage = panel.closest(".debug-stage");
+    const stageTitle = normalizeText(
+      stage?.querySelector(":scope > .debug-stage-title")?.textContent || "stage"
+    );
+    const label = normalizeText(
+      panel.previousElementSibling?.classList.contains("debug-label")
+        ? panel.previousElementSibling.textContent
+        : "code"
+    );
+    const call = panel.closest("details.debug-call");
+    const calls = [...card.querySelectorAll("details.debug-call")];
+    const callIndex = call ? calls.indexOf(call) : -1;
+    return `${stageTitle}|call:${callIndex}|${label}`;
+  }
+
+  function codePanelKey(panel, card) {
+    const base = codePanelBase(panel, card);
+    const panels = [...card.querySelectorAll(".debug-code")];
+    const panelIndex = panels.indexOf(panel);
+    let occurrence = 0;
+
+    for (let index = 0; index < panelIndex; index++) {
+      if (codePanelBase(panels[index], card) === base) occurrence++;
+    }
+
+    return `${base}|occurrence:${occurrence}`;
+  }
+
+  function nestedDetailsKey(details, card) {
+    const calls = [...card.querySelectorAll("details.debug-call")];
+    const index = calls.indexOf(details);
+    return index >= 0 ? `call:${index}` : null;
+  }
+
+  function rememberPanelScroll(panel) {
+    const card = panel.closest("details.debug-trace");
+    const traceId = traceIdFor(card);
+    if (!card || !traceId) return;
+
+    const key = codePanelKey(panel, card);
+    let traceState = panelScrollState.get(traceId);
+    if (!traceState) {
+      traceState = new Map();
+      panelScrollState.set(traceId, traceState);
+    }
+
+    traceState.set(key, {
+      top: panel.scrollTop,
+      left: panel.scrollLeft,
+    });
+  }
+
+  function restorePanelScroll(card, traceId) {
+    const traceState = panelScrollState.get(traceId);
+    if (!traceState) return;
+
+    for (const panel of card.querySelectorAll(".debug-code")) {
+      const saved = traceState.get(codePanelKey(panel, card));
+      if (!saved) continue;
+
+      const maxTop = Math.max(0, panel.scrollHeight - panel.clientHeight);
+      const maxLeft = Math.max(0, panel.scrollWidth - panel.clientWidth);
+      panel.scrollTop = Math.min(saved.top, maxTop);
+      panel.scrollLeft = Math.min(saved.left, maxLeft);
+    }
+  }
+
+  function restoreNestedDetails(card, traceId) {
+    for (const details of card.querySelectorAll("details.debug-call")) {
+      const key = nestedDetailsKey(details, card);
+      if (!key) continue;
+      const stateKey = `${traceId}|${key}`;
+      if (nestedOpenState.has(stateKey)) {
+        details.open = nestedOpenState.get(stateKey);
+      }
+    }
+  }
+
   function rememberViewportAnchor() {
     if (!debugPageIsActive()) return;
 
@@ -72,8 +157,21 @@
     });
   }
 
+  function pruneRemovedTraces(available) {
+    const liveIds = new Set(available.map(traceIdFor).filter(Boolean));
+
+    for (const traceId of panelScrollState.keys()) {
+      if (!liveIds.has(traceId)) panelScrollState.delete(traceId);
+    }
+    for (const stateKey of nestedOpenState.keys()) {
+      const traceId = stateKey.split("|", 1)[0];
+      if (!liveIds.has(traceId)) nestedOpenState.delete(stateKey);
+    }
+  }
+
   function restoreReaderState() {
     const available = cards();
+    pruneRemovedTraces(available);
 
     for (const card of available) {
       const id = traceIdFor(card);
@@ -82,6 +180,8 @@
       card.dataset.traceId = id;
       const shouldBeOpen = openTraceIds.has(id);
       if (card.open !== shouldBeOpen) card.open = shouldBeOpen;
+      restoreNestedDetails(card, id);
+      restorePanelScroll(card, id);
     }
 
     if (anchor) {
@@ -91,12 +191,21 @@
         if (Math.abs(delta) > 0.5) window.scrollBy(0, delta);
       }
     }
+
+    requestAnimationFrame(() => {
+      for (const card of cards()) {
+        const id = traceIdFor(card);
+        if (!id) continue;
+        restoreNestedDetails(card, id);
+        restorePanelScroll(card, id);
+      }
+    });
   }
 
   function scheduleRestore() {
     if (restoreScheduled) return;
     restoreScheduled = true;
-    queueMicrotask(() => {
+    requestAnimationFrame(() => {
       restoreScheduled = false;
       restoreReaderState();
     });
@@ -119,28 +228,51 @@
     return true;
   }
 
+  document.addEventListener("scroll", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element) || !target.matches("#debug-list .debug-code")) return;
+    rememberPanelScroll(target);
+  }, true);
+
   document.addEventListener("click", (event) => {
-    const summary = event.target.closest(
+    const topSummary = event.target.closest(
       "#debug-list > details.debug-trace > summary.debug-summary"
     );
-    if (!summary) return;
+    if (topSummary) {
+      const card = topSummary.parentElement;
+      const id = traceIdFor(card);
+      if (!id) return;
 
-    const card = summary.parentElement;
-    const id = traceIdFor(card);
-    if (!id) return;
+      rememberViewportAnchor();
+      setTimeout(() => {
+        if (!card.isConnected) return;
 
-    rememberViewportAnchor();
+        if (card.open) openTraceIds.add(id);
+        else openTraceIds.delete(id);
+        saveOpenTraceIds();
+
+        anchor = {
+          id,
+          top: card.getBoundingClientRect().top,
+        };
+      }, 0);
+      return;
+    }
+
+    const nestedSummary = event.target.closest(
+      "#debug-list details.debug-call > summary"
+    );
+    if (!nestedSummary) return;
+
+    const details = nestedSummary.parentElement;
+    const card = details.closest("details.debug-trace");
+    const traceId = traceIdFor(card);
+    const key = card ? nestedDetailsKey(details, card) : null;
+    if (!traceId || !key) return;
+
     setTimeout(() => {
-      if (!card.isConnected) return;
-
-      if (card.open) openTraceIds.add(id);
-      else openTraceIds.delete(id);
-      saveOpenTraceIds();
-
-      anchor = {
-        id,
-        top: card.getBoundingClientRect().top,
-      };
+      if (!details.isConnected) return;
+      nestedOpenState.set(`${traceId}|${key}`, details.open);
     }, 0);
   }, true);
 
