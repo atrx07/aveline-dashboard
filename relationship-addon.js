@@ -165,6 +165,17 @@
     setTimeout(decorate, 60);
   }
 
+  function mutationNeedsDecoration(mutations) {
+    return mutations.some((mutation) => [...mutation.addedNodes].some((node) => {
+      if (node.nodeType !== 1) return false;
+      if (node.matches?.('[data-rel-addon]')) return false;
+      return Boolean(
+        node.matches?.(".group-card,.dm-card,.member-row") ||
+        node.querySelector?.(".group-card,.dm-card,.member-row")
+      );
+    }));
+  }
+
   async function refresh() {
     if (typeof api !== "function") return;
     try {
@@ -183,13 +194,15 @@
       if (!content) return;
       clearInterval(wait);
 
-      const observer = new MutationObserver(() => queueDecorate());
+      const observer = new MutationObserver((mutations) => {
+        if (mutationNeedsDecoration(mutations)) queueDecorate();
+      });
       observer.observe(content, { childList: true, subtree: true });
       refresh();
     }, 200);
 
     document.addEventListener("click", (event) => {
-      const chatsNav = event.target.closest('[data-page="chats"], [onclick*="chats"], .dni');
+      const chatsNav = event.target.closest('[onclick*="chats"]');
       const refreshButton = event.target.closest('#page-chats .rbtn');
       if (refreshButton || chatsNav) setTimeout(refresh, 350);
     });
