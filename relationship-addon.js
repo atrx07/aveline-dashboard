@@ -25,6 +25,7 @@
     disliked: ["Disliked", "✕", "negative"],
     avoided: ["Avoided", "↘", "negative"],
     hostile: ["Hostile", "🔥", "negative"],
+    hated: ["Hated", "🩸", "negative"],
     enemy: ["Enemy", "☠", "negative"],
     estranged: ["Estranged", "⌁", "distant"],
   };
@@ -103,7 +104,7 @@
     const pending = rel.pendingTransition;
     const pendingMeta = pending ? prettyStatus(pending.target) : null;
     const pendingHtml = pending
-      ? `<div class="rel-pending"><strong>Considering → ${esc(pendingMeta.icon)} ${esc(pendingMeta.label)}</strong><div class="rel-pending-copy">Evidence ${esc(pending.evidence || 0)} · ${esc(pending.reason || "relationship evidence is accumulating")}</div></div>`
+      ? `<div class="rel-pending"><strong>Considering → ${esc(pendingMeta.icon)} ${esc(pendingMeta.label)}</strong><div class="rel-pending-copy">Evidence ${esc(pending.evidence || 0)}/${esc(pending.threshold || "?")} · ${esc(pending.reason || "relationship evidence is accumulating")}</div></div>`
       : "";
 
     return `<div class="rel-panel" data-rel-addon>
