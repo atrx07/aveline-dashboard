@@ -2,8 +2,8 @@
 
 (() => {
   const MODEL_LABELS = {
-    "llama-3.3-70b-versatile": "Llama 3.3 70B",
-    "llama-3.1-8b-instant": "Llama 3.1 8B",
+    "qwen/qwen3.6-27b": "Qwen 3.6 27B",
+    "openai/gpt-oss-20b": "GPT-OSS 20B",
     "openai/gpt-oss-120b": "GPT-OSS 120B",
   };
 
@@ -27,13 +27,13 @@
     .router-key{position:relative;overflow:hidden;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 12px;transition:border-color .2s,background .2s}
     .router-key.available{border-color:rgba(95,255,154,.22)}
     .router-key.cooldown{border-color:rgba(255,179,71,.32);background:rgba(255,179,71,.035)}
-    .router-key.disabled,.router-key.not_configured{border-color:rgba(255,95,95,.3);background:rgba(255,95,95,.03)}
+    .router-key.disabled,.router-key.not_configured,.router-key.model_unavailable{border-color:rgba(255,95,95,.3);background:rgba(255,95,95,.03)}
     .router-key.ready_to_probe{border-color:rgba(95,184,255,.35);background:rgba(95,184,255,.035)}
     .router-key-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
     .router-key-name{font-size:11px;font-weight:900;font-style:italic;color:var(--text)}
     .router-badge{font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;padding:3px 6px;border-radius:999px;background:rgba(95,255,154,.1);color:var(--green)}
     .router-key.cooldown .router-badge{background:rgba(255,179,71,.12);color:var(--orange)}
-    .router-key.disabled .router-badge,.router-key.not_configured .router-badge{background:rgba(255,95,95,.12);color:var(--red)}
+    .router-key.disabled .router-badge,.router-key.not_configured .router-badge,.router-key.model_unavailable .router-badge{background:rgba(255,95,95,.12);color:var(--red)}
     .router-key.ready_to_probe .router-badge{background:rgba(95,184,255,.12);color:var(--blue)}
     .router-timer{font-variant-numeric:tabular-nums;font-size:20px;font-weight:900;font-style:italic;color:var(--orange);margin-top:8px;letter-spacing:-.5px}
     .router-meta{display:flex;justify-content:space-between;gap:8px;margin-top:7px;font-size:9px;color:var(--muted)}
@@ -116,6 +116,7 @@
     const now = Date.now() + serverOffset;
     if (!key.configured) return "not_configured";
     if (key.disabled) return "disabled";
+    if (key.modelUnavailable || key.status === "model_unavailable") return "model_unavailable";
     if (key.cooldownUntil > now) return "cooldown";
     if (key.cooldownUntil) return "ready_to_probe";
     return key.status === "unknown" ? "available" : key.status;
@@ -127,6 +128,7 @@
       cooldown: "Cooldown",
       ready_to_probe: "Ready to probe",
       disabled: "Disabled",
+      model_unavailable: "Model unavailable",
       not_configured: "Not configured",
       unknown: "Unknown",
     })[status] || status;
